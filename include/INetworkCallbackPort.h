@@ -1,4 +1,3 @@
-#pragma once
 #include <string>
 
 // Boost.Beast uses this to push async HTTP responses back to the Core
