@@ -13,7 +13,46 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="mainLayout" stretch="1,0">
+    <item>
+     <widget class="QQuickWidget" name="mapWidget"/>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="sideLayout">
+      <item>
+       <widget class="QGroupBox" name="irritantGroup">
+        <property name="title">
+         <string>Irritants</string>
+        </property>
+        <layout class="QVBoxLayout" name="irritantLayout"/>
+       </widget>
+      </item>
+      <item>
+       <spacer name="sideSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="zoomInButton">
+        <property name="text">
+         <string>Zoom in</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="zoomOutButton">
+        <property name="text">
+         <string>Zoom out</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -26,6 +65,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QQuickWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QtQuickWidgets/QQuickWidget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
