@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.21)
 
 # Export compile_commands for IntelliSense/Clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt6
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Core Widgets Quick QuickWidgets Location Positioning)
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS system)
@@ -18,7 +18,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 # Find SQLite3
 find_package(SQLite3 REQUIRED)
 
-qt_standard_project_setup()
+qt_standard_project_setup(REQUIRES 6.12)
+if(QT_KNOWN_POLICY_QTP0004)
+    qt_policy(SET QTP0004 NEW)
+endif()
 
 # Help Qt Creator and CMake locate the UI form.
 set(CMAKE_AUTOUIC_SEARCH_PATHS
@@ -31,6 +34,22 @@ qt_add_executable(CommutePlanner
     src/mainwindow.cpp
     include/mainwindow.h
     ui/mainwindow.ui
+    include/airQualityLevels.h
+    src/airQualityLevels.cpp
+    include/dummyCore.h
+    src/dummyCore.cpp
+)
+
+qt_add_qml_module(CommutePlanner
+    URI CommutePlanner
+    VERSION 1.0
+    QML_FILES
+        qml/HeatmapMap.qml
+    SOURCES
+        include/mapViewModel.h
+        src/mapViewModel.cpp
+        include/heatmapModel.h
+        src/heatmapModel.cpp
 )
 
 # Make project headers available to source files.
@@ -43,6 +62,10 @@ target_link_libraries(CommutePlanner
     PRIVATE
         Qt::Core
         Qt::Widgets
+        Qt::Quick
+        Qt::QuickWidgets
+        Qt::Location
+        Qt::Positioning
         Boost::boost
         Boost::system
         SQLite3::SQLite3
@@ -56,7 +79,7 @@ install(TARGETS CommutePlanner
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-qt_generate_deploy_app_script(
+qt_generate_deploy_qml_app_script(
     TARGET CommutePlanner
     OUTPUT_SCRIPT deploy_script
     NO_UNSUPPORTED_PLATFORM_ERROR
