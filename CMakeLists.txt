@@ -1,7 +1,22 @@
 cmake_minimum_required(VERSION 3.19)
+
+# Export compile_commands for IntelliSense/Clangd
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(CommutePlanner LANGUAGES CXX)
 
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find Qt6
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+
+# Find Boost
+find_package(Boost REQUIRED COMPONENTS system)
+
+# Find SQLite3
+find_package(SQLite3 REQUIRED)
 
 qt_standard_project_setup()
 
@@ -28,6 +43,9 @@ target_link_libraries(CommutePlanner
     PRIVATE
         Qt::Core
         Qt::Widgets
+        Boost::boost
+        Boost::system
+        SQLite3::SQLite3
 )
 
 include(GNUInstallDirs)
