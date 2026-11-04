@@ -5,7 +5,6 @@
 class INetworkRequestPort {
 public:
     virtual ~INetworkRequestPort() = default;
-
     virtual void request(
         const std::string& requestId,
         const std::string& method,
