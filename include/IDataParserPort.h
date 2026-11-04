@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "DomainModels.h"
+#include "domainModels.h"
 
 // Core uses this to translate raw JSON into structs defined in domainModels
 class IDataParserPort {
