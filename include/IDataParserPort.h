@@ -7,7 +7,6 @@
 class IDataParserPort {
 public:
     virtual ~IDataParserPort() = default;
-
     virtual std::vector<AirQualityData> parseAirQuality(const std::string& jsonPayload) = 0;
     virtual std::vector<WeatherData> parseWeatherForecast(const std::string& jsonPayload) = 0;
     virtual std::vector<RouteData> parseRoute(const std::string& jsonPayload) = 0;
