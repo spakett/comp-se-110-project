@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <vector>
 #include <map>
@@ -40,6 +41,7 @@ enum class Irritant {
 struct AirQualityData {
     std::string timestamp;
     std::map<Irritant, double> readings;
+    std::vector<Coordinates> points; // Added for heatmap rendering
 };
 
 // Parsed environmental data
@@ -64,4 +66,5 @@ struct RouteData {
     double totalLengthKm;
     double totalTimeSeconds;
     std::vector<Maneuver> maneuvers;
+    std::vector<Coordinates> polyline; // Added for map rendering
 };
