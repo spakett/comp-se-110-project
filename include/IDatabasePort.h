@@ -1,5 +1,6 @@
 #include <string>
 #include <optional>
+#pragma once
 
 // Core uses this to command SQLite to manage caching
 class IDatabasePort {
