@@ -1,11 +1,11 @@
+#pragma once
 #include <string>
 #include <map>
 
-// Core uses this to command Boost.Beast to fetch data from APIs
+// API handler uses this to issue HTTP requests through the network adapter
 class INetworkRequestPort {
 public:
     virtual ~INetworkRequestPort() = default;
-
     virtual void request(
         const std::string& requestId,
         const std::string& method,
