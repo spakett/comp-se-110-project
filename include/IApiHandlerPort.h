@@ -17,14 +17,9 @@ class IApiHandlerPort {
 public:
     virtual ~IApiHandlerPort() = default;
 
-    virtual void searchLocation(const std::string& requestId, const std::string& addressQuery) = 0;
-    virtual void requestRoute(
+    virtual void requestAreaAirQuality(
         const std::string& requestId,
         const BoundingBox& area,
         const std::vector<Irritant>& irritants
     ) = 0;
-    
-    virtual void requestWeatherForecast(
-        const std::string& requestId, 
-        const Coordinates& coords) = 0;
 };

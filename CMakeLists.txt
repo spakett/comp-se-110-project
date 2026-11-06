@@ -75,6 +75,10 @@ target_link_libraries(CommutePlanner
         SQLite::SQLite3
 )
 
+set_target_properties(CommutePlanner PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
 include(GNUInstallDirs)
 
 install(TARGETS CommutePlanner
