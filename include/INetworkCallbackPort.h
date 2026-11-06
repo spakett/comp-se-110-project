@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 
 // Network adapter uses this to deliver async HTTP responses to the API handler
