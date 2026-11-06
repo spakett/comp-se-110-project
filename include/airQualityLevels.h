@@ -7,7 +7,7 @@
 
 enum class AirQualityLevel { Good, Fair, Moderate, Poor, VeryPoor, ExtremelyPoor };
 
-constexpr double kGridStepLat = 0.05;
+constexpr double kGridStepLat = 0.1;
 constexpr double kGridStepLon = 0.1;
 
 const std::vector<Irritant>& allIrritants();
