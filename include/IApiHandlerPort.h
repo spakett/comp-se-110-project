@@ -28,16 +28,21 @@ public:
         const Coordinates& destination,
         TravelMode mode
     ) = 0;
+
     virtual void requestAreaAirQuality(
         const std::string& requestId,
         const BoundingBox& area,
         const std::vector<Irritant>& irritants
     ) = 0;
+    
     virtual void requestHistoricalData(
         const std::string& requestId,
         const Coordinates& location,
         int daysPast,
         const std::vector<Irritant>& irritants
     ) = 0;
-    virtual void requestWeatherForecast(const std::string& requestId, const Coordinates& coords) = 0;
+    
+    virtual void requestWeatherForecast(
+        const std::string& requestId, 
+        const Coordinates& coords) = 0;
 };
