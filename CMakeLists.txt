@@ -39,6 +39,10 @@ qt_add_executable(CommutePlanner
     src/sqliteDatabase.cpp
     include/QtNetworkClient.h
     src/QtNetworkClient.cpp
+    include/apiHandler.h
+    src/apiHandler.cpp
+    include/core.h
+    src/core.cpp
 )
 
 qt_add_qml_module(CommutePlanner
