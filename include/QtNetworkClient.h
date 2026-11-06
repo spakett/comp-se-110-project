@@ -1,10 +1,11 @@
+#pragma once
 #include "INetworkRequestPort.h"
 #include "INetworkCallbackPort.h"
 
 #include <QNetworkAccessManager>
 #include <QObject>
 
-class QtNetworkClient : public QObject, public INetWorkRequestPort {
+class QtNetworkClient : public INetworkRequestPort, public QObject {
 
 public:
     explicit QNetworkClient(
@@ -19,6 +20,9 @@ public:
         const std::string& url,
         const std::map<std::string, std::string>& headers,
         const std::string& body = ""
-    )
+    ) override;
 
-}
+private:
+    INetworkCallbackPort& m_callback;
+    QNetworkAccessManager m_manager;
+};
