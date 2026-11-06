@@ -8,7 +8,7 @@
 class QtNetworkClient : public INetworkRequestPort, public QObject {
 
 public:
-    explicit QNetworkClient(
+    explicit QtNetworkClient(
         INetworkCallbackPort& callback,
         QObject* parent = nullptr
     );
