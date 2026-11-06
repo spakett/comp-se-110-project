@@ -10,10 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt6
-find_package(Qt6 6.12 REQUIRED COMPONENTS Core Widgets Quick QuickWidgets Location Positioning)
-
-# Find Boost
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Core Widgets Quick QuickWidgets Location Positioning Network)
 
 # Find SQLite3
 find_package(SQLite3 REQUIRED)
@@ -66,8 +63,7 @@ target_link_libraries(CommutePlanner
         Qt::QuickWidgets
         Qt::Location
         Qt::Positioning
-        Boost::boost
-        Boost::system
+        Qt::Network
         SQLite3::SQLite3
 )
 
