@@ -1,6 +1,6 @@
 #include <string>
 
-// Boost.Beast uses this to push async HTTP responses back to the Core
+// Qt Network uses this to push async HTTP responses back to the Core
 class INetworkCallbackPort {
 public:
     virtual ~INetworkCallbackPort() = default;
