@@ -37,6 +37,15 @@ qt_add_executable(CommutePlanner
     src/dummyCore.cpp
     include/QtNetworkClient.h
     src/QtNetworkClient.cpp
+
+    include/api/airQualityService.h
+    src/api/airQualityService.cpp
+    include/api/weatherService.h
+    src/api/weatherService.cpp
+    include/api/routingService.h
+    src/api/routingService.cpp
+    include/api/geocodingService.h
+    src/api/geocodingService.cpp
 )
 
 qt_add_qml_module(CommutePlanner
