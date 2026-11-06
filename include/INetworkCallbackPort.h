@@ -1,6 +1,6 @@
 #include <string>
 
-// Qt Network uses this to push async HTTP responses back to the Core
+// Network adapter uses this to deliver async HTTP responses to the API handler
 class INetworkCallbackPort {
 public:
     virtual ~INetworkCallbackPort() = default;
