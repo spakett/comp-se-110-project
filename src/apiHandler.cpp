@@ -22,6 +22,7 @@ namespace {
 
 constexpr char kApiIdentifier[] = "open-meteo-air-quality";
 constexpr char kEndpoint[] = "https://air-quality-api.open-meteo.com/v1/air-quality";
+constexpr char kDomain[] = "cams_europe";
 constexpr std::size_t kMaxGridPoints = 100;
 
 std::string apiVariable(Irritant irritant) {
@@ -89,6 +90,7 @@ QUrl makeRequestUrl(const std::vector<Coordinates>& points, const QStringList& v
     query.addQueryItem("longitude", longitudes.join(','));
     query.addQueryItem("current", variables.join(','));
     query.addQueryItem("timezone", "GMT");
+    query.addQueryItem("domains", QString::fromLatin1(kDomain));
     url.setQuery(query);
     return url;
 }
