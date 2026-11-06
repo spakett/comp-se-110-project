@@ -35,6 +35,8 @@ qt_add_executable(CommutePlanner
     src/airQualityLevels.cpp
     include/dummyCore.h
     src/dummyCore.cpp
+    include/QtNetworkClient.h
+    src/QtNetworkClient.cpp
 )
 
 qt_add_qml_module(CommutePlanner
