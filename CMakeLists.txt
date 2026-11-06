@@ -72,7 +72,7 @@ target_link_libraries(CommutePlanner
         Qt::Location
         Qt::Positioning
         Qt::Network
-        SQLite3::SQLite3
+        SQLite::SQLite3
 )
 
 include(GNUInstallDirs)
