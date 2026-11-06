@@ -18,12 +18,7 @@ public:
     void requestAreaAirQuality(const BoundingBox& area) override;
     void requestHistoricalData(const Coordinates& location, int daysPast) override;
     void requestWeatherForecast(const Coordinates& coords) override;
-
-    void onLocationsFound(const std::string& requestId, const std::vector<Location>& locations) override;
-    void onRoutesFound(const std::string& requestId, const std::vector<RouteData>& routes) override;
     void onAreaAirQualityFound(const std::string& requestId, const std::vector<AirQualityData>& data) override;
-    void onHistoricalDataFound(const std::string& requestId, const std::vector<AirQualityData>& data) override;
-    void onWeatherForecastFound(const std::string& requestId, const WeatherData& weather) override;
     void onApiError(const std::string& requestId, const std::string& message) override;
 
 private:
