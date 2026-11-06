@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -50,10 +51,20 @@ private:
 
     struct RequestContext {
         RequestType type;
+        std::string apiIdentifier;
         std::string cacheKey;
     };
 
     std::string nextRequestId();
+    void dispatchRequest(
+        RequestType type,
+        const std::string& apiIdentifier,
+        const std::string& method,
+        const std::string& url,
+        const std::map<std::string, std::string>& headers,
+        const std::string& body = ""
+    );
+    bool deliverResponse(const RequestContext& context, const std::string& jsonPayload);
 
     IUiOutputPort& m_uiOutput;
     INetworkRequestPort& m_networkRequest;
