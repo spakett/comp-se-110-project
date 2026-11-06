@@ -7,8 +7,11 @@
 
 using namespace std;
 
-QtNetworkClient::QtNetworkClient(INetworkCallbackPort& callback, QObject* parent): 
-    m_callback(callback), QObject(parent) {
+QtNetworkClient::QtNetworkClient(QObject* parent) : QObject(parent) {
+}
+
+void QtNetworkClient::setCallback(INetworkCallbackPort& callback) {
+    m_callback = &callback;
 }
 
 void QtNetworkClient::request(
@@ -23,12 +26,11 @@ void QtNetworkClient::request(
     const QUrl parsedUrl(QString::fromStdString(url));
 
     if (!parsedUrl.isValid() || parsedUrl.scheme() != QStringLiteral("https") || parsedUrl.host().isEmpty()) {
-        m_callback.onNetworkError(requestId, apiIdentifier, "Invalid HTTPS URL");
+        m_callback->onNetworkError(requestId, apiIdentifier, "Invalid HTTPS URL");
         return;
     }
 
     QNetworkRequest networkRequest(parsedUrl);
-
     networkRequest.setTransferTimeout(30000);
 
     for (const auto& header : headers) {
@@ -44,8 +46,10 @@ void QtNetworkClient::request(
         QByteArray::fromStdString(body)
     );
 
+    INetworkCallbackPort* callback = m_callback;
+
     connect(reply, &QNetworkReply::finished, this,
-        [this, reply, requestId, apiIdentifier]() {
+        [callback, reply, requestId, apiIdentifier]() {
             const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
             if (reply->error() != QNetworkReply::NoError) {
@@ -54,12 +58,12 @@ void QtNetworkClient::request(
                     ? "HTTP status " + std::to_string(statusCode)
                     : reply->errorString().toStdString();
 
-                m_callback.onNetworkError(requestId, apiIdentifier, errorMessage);
+                callback->onNetworkError(requestId, apiIdentifier, errorMessage);
             } else {
                 const std::string payload =
                     reply->readAll().toStdString();
 
-                m_callback.onNetworkResponse(requestId, apiIdentifier, payload);
+                callback->onNetworkResponse(requestId, apiIdentifier, payload);
             }
 
             reply->deleteLater();

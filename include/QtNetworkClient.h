@@ -8,10 +8,8 @@
 class QtNetworkClient : public INetworkRequestPort, public QObject {
 
 public:
-    explicit QtNetworkClient(
-        INetworkCallbackPort& callback,
-        QObject* parent = nullptr
-    );
+    QtNetworkClient(QObject* parent = nullptr);
+    void setCallback(INetworkCallbackPort& callback);
 
     void request(
         const std::string& requestId,
@@ -23,6 +21,6 @@ public:
     ) override;
 
 private:
-    INetworkCallbackPort& m_callback;
+    INetworkCallbackPort* m_callback = nullptr;
     QNetworkAccessManager m_manager;
 };
