@@ -5,6 +5,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(CommutePlanner LANGUAGES CXX)
 
+include(CTest)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,8 +35,6 @@ qt_add_executable(CommutePlanner
     ui/mainwindow.ui
     include/airQualityLevels.h
     src/airQualityLevels.cpp
-    include/dummyCore.h
-    src/dummyCore.cpp
     include/sqliteDatabase.h
     src/sqliteDatabase.cpp
     include/QtNetworkClient.h
@@ -74,6 +74,16 @@ target_link_libraries(CommutePlanner
         Qt::Network
         SQLite::SQLite3
 )
+
+if(BUILD_TESTING)
+    add_executable(apiHandlerTests
+        tests/apiHandlerTest.cpp
+        src/apiHandler.cpp
+    )
+    target_include_directories(apiHandlerTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(apiHandlerTests PRIVATE Qt::Core)
+    add_test(NAME apiHandlerTests COMMAND apiHandlerTests)
+endif()
 
 set_target_properties(CommutePlanner PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
