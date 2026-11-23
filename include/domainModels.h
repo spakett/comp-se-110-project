@@ -37,10 +37,13 @@ enum class Irritant {
     RagweedPollen, Dust, UvIndex
 };
 
+enum class AirQualityLevel { Good, Fair, Moderate, Poor, VeryPoor, ExtremelyPoor };
+
 // Air quality metrics mapped by Irritant
 struct AirQualityData {
     std::string timestamp;
     std::map<Irritant, double> readings;
+    std::map<Irritant, AirQualityLevel> levels;
     std::vector<Coordinates> points; // Added for heatmap rendering
 };
 

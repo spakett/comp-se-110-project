@@ -50,11 +50,19 @@ qt_add_qml_module(CommutePlanner
     VERSION 1.0
     QML_FILES
         qml/HeatmapMap.qml
+        qml/CityOverviewMap.qml
+        qml/RouteMap.qml
     SOURCES
         include/mapViewModel.h
         src/mapViewModel.cpp
         include/heatmapModel.h
         src/heatmapModel.cpp
+        include/cityViewModel.h
+        src/cityViewModel.cpp
+        include/cityOverviewModel.h
+        src/cityOverviewModel.cpp
+        include/routeViewModel.h
+        src/routeViewModel.cpp
 )
 
 # Make project headers available to source files.

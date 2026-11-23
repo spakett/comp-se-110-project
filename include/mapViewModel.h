@@ -22,7 +22,6 @@ public:
 
 signals:
     void viewportChanged(double north, double south, double west, double east);
-    void zoomRequested(int steps);
 
 private:
     HeatmapModel m_heatmap;
