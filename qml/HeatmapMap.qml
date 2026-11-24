@@ -70,14 +70,6 @@ Item {
         }
     }
 
-    Connections {
-        target: root.viewModel
-        function onZoomRequested(steps) {
-            view.map.zoomLevel = Math.max(view.minimumZoomLevel,
-                                          Math.min(view.maximumZoomLevel, Math.round(view.map.zoomLevel) + steps))
-        }
-    }
-
     Rectangle {
         anchors.left: parent.left
         anchors.bottom: parent.bottom

@@ -6,47 +6,197 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1100</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Commute Planner</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="mainLayout" stretch="1,0">
+   <layout class="QHBoxLayout" name="mainLayout" stretch="0,1">
     <item>
-     <widget class="QQuickWidget" name="mapWidget"/>
+     <widget class="QListWidget" name="navList">
+      <property name="maximumSize">
+       <size>
+        <width>160</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <item>
+       <property name="text">
+        <string>Home</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Heatmap</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Routes</string>
+       </property>
+      </item>
+     </widget>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="sideLayout">
+     <layout class="QVBoxLayout" name="rightColumn" stretch="1,0">
+      <item>
+       <widget class="QStackedWidget" name="pageStack">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="page1">
+         <layout class="QHBoxLayout" name="page1Layout" stretch="1,0">
+          <item>
+           <widget class="QQuickWidget" name="overviewWidget"/>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="cityPanelLayout">
+            <item>
+             <widget class="QLabel" name="cityNameLabel">
+              <property name="styleSheet">
+               <string>font-weight: bold; font-size: 14px;</string>
+              </property>
+              <property name="text">
+               <string>Select a city</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="cityGradeLabel">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="cityPollutantsGroup">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Selected pollutants</string>
+              </property>
+              <layout class="QVBoxLayout" name="cityPollutantsLayout"/>
+             </widget>
+            </item>
+            <item>
+             <spacer name="cityPanelSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageHeatmap">
+         <layout class="QHBoxLayout" name="heatmapPageLayout">
+          <item>
+           <widget class="QQuickWidget" name="mapWidget"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="page3">
+         <layout class="QHBoxLayout" name="page3Layout" stretch="1,0">
+          <item>
+           <widget class="QQuickWidget" name="routeWidget"/>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="routePanelLayout">
+            <item>
+             <widget class="QGroupBox" name="travelModeGroup">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Travel mode</string>
+              </property>
+              <layout class="QHBoxLayout" name="travelModeLayout">
+               <item>
+                <widget class="QRadioButton" name="carRadio">
+                 <property name="text">
+                  <string>Car</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="bikeRadio">
+                 <property name="text">
+                  <string>Bike</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="walkRadio">
+                 <property name="text">
+                  <string>Walking</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="startLabel">
+              <property name="text">
+               <string>Start: click the map</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="destLabel">
+              <property name="text">
+               <string>Destination: click the map</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="findRoutesButton">
+              <property name="text">
+               <string>Find best routes</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="routeList"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
       <item>
        <widget class="QGroupBox" name="irritantGroup">
         <property name="title">
-         <string>Irritants</string>
+         <string>Choose irritants</string>
         </property>
-        <layout class="QVBoxLayout" name="irritantLayout"/>
-       </widget>
-      </item>
-      <item>
-       <spacer name="sideSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="zoomInButton">
-        <property name="text">
-         <string>Zoom in</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="zoomOutButton">
-        <property name="text">
-         <string>Zoom out</string>
-        </property>
+        <layout class="QGridLayout" name="irritantGrid"/>
        </widget>
       </item>
      </layout>
@@ -58,7 +208,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1100</width>
      <height>21</height>
     </rect>
    </property>
@@ -73,5 +223,12 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>navList</sender>
+   <signal>currentRowChanged(int)</signal>
+   <receiver>pageStack</receiver>
+   <slot>setCurrentIndex(int)</slot>
+  </connection>
+ </connections>
 </ui>

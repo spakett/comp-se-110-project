@@ -30,9 +30,14 @@ std::string apiVariable(Irritant irritant) {
     case Irritant::PM2_5: return "pm2_5";
     case Irritant::PM10: return "pm10";
     case Irritant::NitrogenDioxide: return "nitrogen_dioxide";
+    case Irritant::SulphurDioxide: return "sulphur_dioxide";
     case Irritant::Ozone: return "ozone";
+    case Irritant::AlderPollen: return "alder_pollen";
     case Irritant::BirchPollen: return "birch_pollen";
     case Irritant::GrassPollen: return "grass_pollen";
+    case Irritant::OlivePollen: return "olive_pollen";
+    case Irritant::MugwortPollen: return "mugwort_pollen";
+    case Irritant::RagweedPollen: return "ragweed_pollen";
     default: return {};
     }
 }
@@ -138,12 +143,15 @@ bool parseSamples(
         const Coordinates fallback = requestedPoints[static_cast<std::size_t>(index)];
         const double latitude = location.value("latitude").toDouble(fallback.latitude);
         const double longitude = location.value("longitude").toDouble(fallback.longitude);
-        AirQualityData sample{current.value("time").toString().toStdString(), {}, {{latitude, longitude}}};
+        AirQualityData sample{current.value("time").toString().toStdString(), {}, {}, {{latitude, longitude}}};
         for (Irritant irritant : irritants) {
             const std::string name = apiVariable(irritant);
             const QJsonValue reading = current.value(QString::fromStdString(name));
-            if (!name.empty() && reading.isDouble())
-                sample.readings.emplace(irritant, reading.toDouble());
+            if (!name.empty() && reading.isDouble()) {
+                const double value = reading.toDouble();
+                sample.readings.emplace(irritant, value);
+                sample.levels.emplace(irritant, levelForReading(irritant, value));
+            }
         }
         samples.push_back(std::move(sample));
     }

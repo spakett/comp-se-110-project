@@ -5,14 +5,14 @@
 #include <vector>
 #include "domainModels.h"
 
-enum class AirQualityLevel { Good, Fair, Moderate, Poor, VeryPoor, ExtremelyPoor };
-
 constexpr double kGridStepLat = 0.1;
 constexpr double kGridStepLon = 0.1;
 
 const std::vector<Irritant>& allIrritants();
 
 std::string irritantDisplayName(Irritant irritant);
+
+std::string levelDisplayName(AirQualityLevel level);
 
 const std::array<double, 5>& levelThresholds(Irritant irritant);
 
