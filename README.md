@@ -38,9 +38,39 @@ Run the application from the repository root:
 ```
 
 ## Windows (Using Qt Creator)
-1. Install Qr Creator and make sure it has 6.12+ kit installed
-2. Open the project's CMakeList as a new project and select Desktop GCC kit with Ninja.
-3. Build and Run the project.
+MinGW compiler is used that comes with the Qt installer.
+
+### Install Qr Creator
+1. Download Qt and Qt Creator IDE 
+2. Select following components from Qt:
+- MinGW 64-bit
+- Additional Libraries -> Qt Location
+- Additional Libraries -> Qt Positioning
+
+### Install CMake
+Ensure that CMake is installed and added to the system PATH (it should be at C:\Program Files\CMake\bin\cmake.exe)
+
+### Install SQLite3 with MSYS2
+1. Download from <https://www.msys2.org/> and keep the default folder `C:\msys64`
+2. Open **MSYS2 MINGW64** shell and start installing SQLite3 there. Run:
+```bash
+pacman -S mingw-w64-x86_64-sqlite3
+```
+3. Ensure that you already got these files:
+```
+C:\msys64\mingw64\include\sqlite3.h
+C:\msys64\mingw64\lib\libsqlite3.dll.a
+```
+
+### Configure project in Qt Creator
+1. On **Configure Project**, select **Desktop Qt 6.12.0 MinGW 64-bit**
+2. Choose **Projects** from the left sidebar, then select **Build Settings** tab
+3. Find the **Additonal CMake options** field and fill in with this line to add them as CMake variables:
+```
+-DSQLite3_INCLUDE_DIR:PATH=C:/msys64/mingw64/include -DSQLite3_LIBRARY:FILEPATH=C:/msys64/mingw64/lib/libsqlite3.dll.a
+```
+4. Build and Run the project
+
 
 ## Tests
 
