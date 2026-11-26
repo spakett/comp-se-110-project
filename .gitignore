@@ -75,3 +75,4 @@ Testing/
 
 # vscode
 .vscode
+*.sqlite
