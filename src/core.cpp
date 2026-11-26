@@ -1,4 +1,6 @@
 #include "core.h"
+#include <algorithm>
+#include "airQualityLevels.h"
 
 Core::Core(IUiOutputPort& uiOutput, IApiHandlerPort& apiHandler)
     : m_uiOutput(uiOutput)
@@ -31,6 +33,7 @@ void Core::requestWeatherForecast(const Coordinates&) {
 }
 
 void Core::onAreaAirQualityFound(const std::string&, const std::vector<AirQualityData>& data) {
+    m_latestAirQuality = data;
     m_uiOutput.displayAirQualityHeatmap(data);
 }
 
@@ -43,7 +46,15 @@ void Core::onRoutesFound(const std::string& requestId, const std::vector<RouteDa
         return;
     if(routes.empty()) 
         m_uiOutput.displayError("No route found between selected points");
-    m_uiOutput.displayRoutes(routes);
+    std::vector<RouteData> scoredRoutes = routes;
+    for (RouteData& route : scoredRoutes)
+        route.airQuality = routeAirQuality(route, m_latestAirQuality, m_selectedIrritants);
+    std::stable_sort(scoredRoutes.begin(), scoredRoutes.end(), [](const RouteData& a, const RouteData& b) {
+        if (!b.airQuality)
+            return a.airQuality.has_value();
+        return a.airQuality && *a.airQuality < *b.airQuality;
+    });
+    m_uiOutput.displayRoutes(scoredRoutes);
 }
 
 std::string Core::nextRequestId() {

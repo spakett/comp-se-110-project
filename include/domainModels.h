@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <optional>
 
 // Represents a geographical point
 struct Coordinates {
@@ -70,4 +71,5 @@ struct RouteData {
     double totalTimeSeconds;
     std::vector<Maneuver> maneuvers;
     std::vector<Coordinates> polyline; // Added for map rendering
+    std::optional<AirQualityLevel> airQuality; // Worst level along the route, empty if unknown
 };

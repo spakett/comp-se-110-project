@@ -1,4 +1,5 @@
 #include "airQualityLevels.h"
+#include <cmath>
 
 const std::vector<Irritant>& allIrritants() {
     static const std::vector<Irritant> irritants = {
@@ -75,6 +76,47 @@ std::optional<AirQualityLevel> worstLevel(const AirQualityData& data, const std:
             continue;
         if (!worst || level->second > *worst)
             worst = level->second;
+    }
+    return worst;
+}
+
+
+namespace {
+// Finds the sample closest to a point
+const AirQualityData* nearestSample(const Coordinates& point, const std::vector<AirQualityData>& samples) {
+    const AirQualityData* nearest = nullptr;
+    double nearestDistance = 0.0;
+    for (const AirQualityData& sample : samples) {
+        if (sample.points.empty())
+            continue;
+        const double latDiff = std::abs(sample.points.front().latitude - point.latitude);
+        const double lonDiff = std::abs(sample.points.front().longitude - point.longitude);
+        if (latDiff > kGridStepLat || lonDiff > kGridStepLon)
+            continue;
+        const double distance = latDiff * latDiff + lonDiff * lonDiff;
+        if (!nearest || distance < nearestDistance) {
+            nearest = &sample;
+            nearestDistance = distance;
+        }
+    }
+    return nearest;
+}
+
+}
+
+std::optional<AirQualityLevel> routeAirQuality(
+    const RouteData& route,
+    const std::vector<AirQualityData>& samples,
+    const std::vector<Irritant>& selected
+) {
+    std::optional<AirQualityLevel> worst;
+    for (const Coordinates& point : route.polyline) {
+        const AirQualityData* sample = nearestSample(point, samples);
+        if (!sample)
+            continue;
+        const std::optional<AirQualityLevel> level = worstLevel(*sample, selected);
+        if (level && (!worst || *level > *worst))
+            worst = level;
     }
     return worst;
 }

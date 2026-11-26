@@ -30,4 +30,5 @@ private:
     std::vector<Irritant> m_selectedIrritants;
     std::uint64_t m_requestCounter = 0;
     std::string m_latestRouteRequestId;
+    std::vector<AirQualityData> m_latestAirQuality;
 };
