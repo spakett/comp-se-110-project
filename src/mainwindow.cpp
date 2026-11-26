@@ -285,10 +285,14 @@ void MainWindow::displayRoutes(const std::vector<RouteData> &routes)
     m_routeViewModel.setRoute({});
     for (std::size_t i = 0; i < m_routes.size(); ++i) {
         const RouteData &route = m_routes[i];
-        ui->routeList->addItem(QStringLiteral("Route %1 — %2 km, %3 min")
+        const QString air = route.airQuality
+            ? QString::fromStdString(levelDisplayName(*route.airQuality))
+            : QStringLiteral("unknown");
+        ui->routeList->addItem(QStringLiteral("Route %1 — %2 km, %3 min, air: %4")
                                    .arg(i + 1)
                                    .arg(route.totalLengthKm, 0, 'f', 1)
-                                   .arg(qRound(route.totalTimeSeconds / 60.0)));
+                                   .arg(qRound(route.totalTimeSeconds / 60.0))
+                                   .arg(air));
     }
 }
 
