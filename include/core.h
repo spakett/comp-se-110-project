@@ -20,6 +20,7 @@ public:
     void requestWeatherForecast(const Coordinates& coords) override;
     void onAreaAirQualityFound(const std::string& requestId, const std::vector<AirQualityData>& data) override;
     void onApiError(const std::string& requestId, const std::string& message) override;
+    void onRoutesFound(const std::string& requestId, const std::vector<RouteData>& routes) override;
 
 private:
     std::string nextRequestId();
@@ -28,4 +29,5 @@ private:
     IApiHandlerPort& m_apiHandler;
     std::vector<Irritant> m_selectedIrritants;
     std::uint64_t m_requestCounter = 0;
+    std::string m_latestRouteRequestId;
 };
