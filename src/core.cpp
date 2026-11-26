@@ -9,8 +9,9 @@ void Core::searchLocation(const std::string&) {
     m_uiOutput.displayError("Location search is not yet implemented");
 }
 
-void Core::requestRoute(const Coordinates&, const Coordinates&, TravelMode) {
-    m_uiOutput.displayError("Routing is not yet implemented");
+void Core::requestRoute(const Coordinates& origin, const Coordinates& destination, TravelMode mode) {
+    m_latestRouteRequestId = nextRequestId();
+    m_apiHandler.requestRoutes(m_latestRouteRequestId, origin, destination, mode);
 }
 
 void Core::setIrritantFilters(const std::vector<Irritant>& irritants) {
@@ -35,6 +36,14 @@ void Core::onAreaAirQualityFound(const std::string&, const std::vector<AirQualit
 
 void Core::onApiError(const std::string&, const std::string& message) {
     m_uiOutput.displayError(message);
+}
+
+void Core::onRoutesFound(const std::string& requestId, const std::vector<RouteData>& routes) {
+    if(requestId != m_latestRouteRequestId)
+        return;
+    if(routes.empty()) 
+        m_uiOutput.displayError("No route found between selected points");
+    m_uiOutput.displayRoutes(routes);
 }
 
 std::string Core::nextRequestId() {
