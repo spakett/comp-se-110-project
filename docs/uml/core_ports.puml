@@ -1,0 +1,56 @@
+@startuml CommutePlanner_Core_Ports
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+title Core and Ports
+
+package "Ports" {
+    interface IUiInputPort {
+        +requestRoute(origin: Coordinates, destination: Coordinates, mode: TravelMode): void
+        +setIrritantFilters(irritants: vector<Irritant>): void
+        +requestAreaAirQuality(area: BoundingBox): void
+    }
+
+    interface IUiOutputPort {
+        +displayRoutes(routes: vector<RouteData>): void
+        +displayAirQualityHeatmap(areaData: vector<AirQualityData>): void
+        +displayError(message: string): void
+    }
+
+    interface IApiHandlerPort {
+        +requestAreaAirQuality(requestId: string, area: BoundingBox, irritants: vector<Irritant>): void
+        +requestRoutes(requestId: string, origin: Coordinates, destination: Coordinates, mode: TravelMode): void
+    }
+
+    interface IApiHandlerCallbackPort {
+        +onAreaAirQualityFound(requestId: string, data: vector<AirQualityData>): void
+        +onRoutesFound(requestId: string, routes: vector<RouteData>): void
+        +onApiError(requestId: string, message: string): void
+    }
+}
+
+package "Application" {
+    class Core {
+        -m_uiOutput: IUiOutputPort&
+        -m_apiHandler: IApiHandlerPort&
+        -m_selectedIrritants: vector<Irritant>
+        -m_requestCounter: uint64_t
+        -m_latestRouteRequestId: string
+        -m_latestAirQuality: vector<AirQualityData>
+        +Core(uiOutput: IUiOutputPort&, apiHandler: IApiHandlerPort&)
+        +requestRoute(origin: Coordinates, destination: Coordinates, mode: TravelMode): void
+        +setIrritantFilters(irritants: vector<Irritant>): void
+        +requestAreaAirQuality(area: BoundingBox): void
+        +onAreaAirQualityFound(requestId: string, data: vector<AirQualityData>): void
+        +onRoutesFound(requestId: string, routes: vector<RouteData>): void
+        +onApiError(requestId: string, message: string): void
+        -nextRequestId(): string
+    }
+}
+
+Core ..|> IUiInputPort
+Core ..|> IApiHandlerCallbackPort
+Core --> IUiOutputPort : notifies
+Core --> IApiHandlerPort : requests
+
+@enduml

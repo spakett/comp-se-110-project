@@ -1,0 +1,92 @@
+@startuml CommutePlanner_Data_Networking
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+title API, Parsing and Caching
+
+package "Ports" {
+    interface IApiHandlerPort {
+        +requestAreaAirQuality(requestId: string, area: BoundingBox, irritants: vector<Irritant>): void
+        +requestRoutes(requestId: string, origin: Coordinates, destination: Coordinates, mode: TravelMode): void
+    }
+
+    interface IApiHandlerCallbackPort {
+        +onAreaAirQualityFound(requestId: string, data: vector<AirQualityData>): void
+        +onRoutesFound(requestId: string, routes: vector<RouteData>): void
+        +onApiError(requestId: string, message: string): void
+    }
+
+    interface INetworkRequestPort {
+        +request(requestId: string, method: string, apiIdentifier: string, url: string, headers: map<string, string>, body: string): void
+    }
+
+    interface INetworkCallbackPort {
+        +onNetworkResponse(requestId: string, apiIdentifier: string, jsonPayload: string): void
+        +onNetworkError(requestId: string, apiIdentifier: string, errorMessage: string): void
+    }
+
+    interface IDatabasePort {
+        +saveCache(endpointKey: string, jsonPayload: string): bool
+        +loadCache(endpointKey: string): string
+        +clearExpiredCache(): void
+    }
+
+    interface IDataParserPort {
+        +parseAirQuality(jsonPayload: string, irritants: vector<Irritant>, requestedPoints: vector<Coordinates>, error: string*): vector<AirQualityData>
+        +parseRoute(jsonPayload: string, error: string*): vector<RouteData>
+    }
+}
+
+package "Adapters" {
+    class ApiHandler {
+        -m_callback: IApiHandlerCallbackPort*
+        -m_networkRequest: INetworkRequestPort&
+        -m_database: IDatabasePort&
+        -m_dataParser: IDataParserPort&
+        -m_pendingRequests: unordered_map<string, RequestContext>
+        +ApiHandler(networkRequest: INetworkRequestPort&, database: IDatabasePort&, dataParser: IDataParserPort&)
+        +setCallback(callback: IApiHandlerCallbackPort&): void
+        +requestAreaAirQuality(requestId: string, area: BoundingBox, irritants: vector<Irritant>): void
+        +requestRoutes(requestId: string, origin: Coordinates, destination: Coordinates, mode: TravelMode): void
+        +onNetworkResponse(requestId: string, apiIdentifier: string, jsonPayload: string): void
+        +onNetworkError(requestId: string, apiIdentifier: string, errorMessage: string): void
+        -dispatchRequest(...): void
+        -deliverResponse(...): bool
+    }
+
+    class DataParser {
+        +parseAirQuality(jsonPayload: string, irritants: vector<Irritant>, requestedPoints: vector<Coordinates>, error: string*): vector<AirQualityData>
+        +parseRoute(jsonPayload: string, error: string*): vector<RouteData>
+    }
+
+    class QtNetworkClient {
+        -m_callback: INetworkCallbackPort*
+        -m_manager: QNetworkAccessManager
+        +QtNetworkClient(parent: QObject*)
+        +setCallback(callback: INetworkCallbackPort&): void
+        +request(requestId: string, method: string, apiIdentifier: string, url: string, headers: map<string, string>, body: string): void
+    }
+
+    class SqliteDatabase {
+        -m_db: sqlite3*
+        -m_ttlSeconds: int
+        +SqliteDatabase(filePath: string, ttlSeconds: int)
+        +saveCache(endpointKey: string, jsonPayload: string): bool
+        +loadCache(endpointKey: string): string
+        +clearExpiredCache(): void
+    }
+}
+
+ApiHandler ..|> IApiHandlerPort
+ApiHandler ..|> INetworkCallbackPort
+ApiHandler --> IApiHandlerCallbackPort : callbacks
+ApiHandler --> INetworkRequestPort : HTTP requests
+ApiHandler --> IDatabasePort : cache lookup/save
+ApiHandler --> IDataParserPort : parses JSON
+
+DataParser ..|> IDataParserPort
+QtNetworkClient ..|> INetworkRequestPort
+QtNetworkClient --> INetworkCallbackPort : responses/errors
+SqliteDatabase ..|> IDatabasePort
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml CommutePlanner_Component_Overview
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram
+
+Container_Boundary(app, "Commute Planner Desktop Application") {
+    Component(ui, "UI Adapter", "Qt Widgets / QML", "MainWindow, MapViewModel, CityViewModel, RouteViewModel, HeatmapModel, CityOverviewModel")
+    Component(core, "Core", "C++", "Application orchestrator: irritant filtering, route scoring, request coordination")
+
+    Component(apiHandler, "API Handler", "C++", "Coordinates API requests, grid generation, cache lookup, and response delivery")
+    Component(dataParser, "Data Parser", "C++ / QtCore JSON", "Parses Open-Meteo Air Quality and Valhalla JSON payloads into domain models")
+    Component(networkClient, "Qt Network Client", "Qt6 Network", "Executes async HTTP/HTTPS requests")
+    Component(database, "SQLite Database", "SQLite3", "Caches raw API responses with TTL")
+}
+
+System_Ext(openMeteo, "Open-Meteo Air Quality API", "Air quality REST API")
+System_Ext(valhalla, "Valhalla API", "Routing & alternate paths REST API")
+SystemDb_Ext(sqliteFile, "Local Cache File", "air-quality-cache.sqlite")
+
+Rel(ui, core, "Triggers use cases", "IUiInputPort")
+Rel(core, ui, "Pushes results & errors", "IUiOutputPort")
+
+Rel(core, apiHandler, "Requests air quality & routes", "IApiHandlerPort")
+Rel(apiHandler, core, "Delivers parsed results & errors", "IApiHandlerCallbackPort")
+
+Rel(apiHandler, dataParser, "Parses JSON payloads", "IDataParserPort")
+Rel(apiHandler, database, "Loads / saves cached JSON", "IDatabasePort")
+Rel(apiHandler, networkClient, "Dispatches HTTP requests", "INetworkRequestPort")
+Rel(networkClient, apiHandler, "Returns raw JSON / errors", "INetworkCallbackPort")
+
+Rel(networkClient, openMeteo, "HTTPS GET")
+Rel(networkClient, valhalla, "HTTPS POST")
+Rel(database, sqliteFile, "Reads / writes")
+
+@enduml

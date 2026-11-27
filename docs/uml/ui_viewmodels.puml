@@ -1,0 +1,87 @@
+@startuml CommutePlanner_UI_ViewModels
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+title UI & ViewModels — Class Diagram
+
+package "Ports" {
+    interface IUiInputPort {
+        +requestRoute(origin: Coordinates, destination: Coordinates, mode: TravelMode): void
+        +setIrritantFilters(irritants: vector<Irritant>): void
+        +requestAreaAirQuality(area: BoundingBox): void
+    }
+
+    interface IUiOutputPort {
+        +displayRoutes(routes: vector<RouteData>): void
+        +displayAirQualityHeatmap(areaData: vector<AirQualityData>): void
+        +displayError(message: string): void
+    }
+}
+
+package "UI" {
+    class MainWindow {
+        -m_mapViewModel: MapViewModel
+        -m_cityViewModel: CityViewModel
+        -m_routeViewModel: RouteViewModel
+        -m_core: IUiInputPort*
+        +setInputPort(core: IUiInputPort*): void
+        +displayRoutes(routes: vector<RouteData>): void
+        +displayAirQualityHeatmap(areaData: vector<AirQualityData>): void
+        +displayError(message: string): void
+    }
+
+    class MapViewModel {
+        -m_heatmap: HeatmapModel
+        +heatmap(): HeatmapModel*
+        +reportViewport(north: double, south: double, west: double, east: double): void
+        +colorForLevel(level: int): QColor
+    }
+
+    class CityViewModel {
+        -m_cities: CityOverviewModel
+        +cities(): CityOverviewModel*
+        +selectCity(index: int): void
+    }
+
+    class RouteViewModel {
+        -m_heatmap: HeatmapModel
+        +routePath(): QVariantList
+        +heatmap(): HeatmapModel*
+        +setRoute(polyline: vector<Coordinates>): void
+        +pickPoint(latitude: double, longitude: double): void
+        +reportViewport(north: double, south: double, west: double, east: double): void
+        +colorForLevel(level: int): QColor
+    }
+
+    class HeatmapModel {
+        -m_cells: vector<HeatmapCell>
+        +HeatmapModel(parent: QObject*)
+        +setCells(cells: vector<HeatmapCell>): void
+        +rowCount(parent: QModelIndex): int
+        +data(index: QModelIndex, role: int): QVariant
+        +roleNames(): QHash<int, QByteArray>
+        +{static} colorForLevel(level: AirQualityLevel): QColor
+        +{static} cellsFromAirQuality(samples: vector<AirQualityData>, selected: vector<Irritant>): vector<HeatmapCell>
+    }
+
+    class CityOverviewModel {
+        -m_cities: vector<CityMarker>
+        +CityOverviewModel(parent: QObject*)
+        +setCities(cities: vector<CityMarker>): void
+        +rowCount(parent: QModelIndex): int
+        +data(index: QModelIndex, role: int): QVariant
+        +roleNames(): QHash<int, QByteArray>
+    }
+}
+
+MainWindow ..|> IUiOutputPort
+MainWindow --> IUiInputPort : triggers
+MainWindow *-- MapViewModel
+MainWindow *-- CityViewModel
+MainWindow *-- RouteViewModel
+
+MapViewModel *-- HeatmapModel
+RouteViewModel *-- HeatmapModel
+CityViewModel *-- CityOverviewModel
+
+@enduml
