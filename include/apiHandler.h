@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "IDatabasePort.h"
+#include "IDataParserPort.h"
 #include "INetworkCallbackPort.h"
 #include "INetworkRequestPort.h"
 #include "IApiHandlerPort.h"
@@ -15,7 +16,8 @@ class ApiHandler final : public IApiHandlerPort, public INetworkCallbackPort {
 public:
     ApiHandler(
         INetworkRequestPort& networkRequest,
-        IDatabasePort& database
+        IDatabasePort& database,
+        IDataParserPort& dataParser
     );
     
     void setCallback(IApiHandlerCallbackPort& callback);
@@ -75,5 +77,6 @@ private:
     IApiHandlerCallbackPort* m_callback = nullptr;
     INetworkRequestPort& m_networkRequest;
     IDatabasePort& m_database;
+    IDataParserPort& m_dataParser;
     std::unordered_map<std::string, RequestContext> m_pendingRequests;
 };
