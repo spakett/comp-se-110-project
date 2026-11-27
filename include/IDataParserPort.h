@@ -17,17 +17,7 @@ public:
         std::string* error = nullptr
     ) = 0;
 
-    virtual std::vector<WeatherData> parseWeatherForecast(
-        const std::string& jsonPayload,
-        std::string* error = nullptr
-    ) = 0;
-
     virtual std::vector<RouteData> parseRoute(
-        const std::string& jsonPayload,
-        std::string* error = nullptr
-    ) = 0;
-
-    virtual std::vector<Location> parseLocation(
         const std::string& jsonPayload,
         std::string* error = nullptr
     ) = 0;

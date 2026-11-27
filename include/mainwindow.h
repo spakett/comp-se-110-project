@@ -25,11 +25,8 @@ public:
 
     void setInputPort(IUiInputPort *core);
 
-    void displayLocations(const std::vector<Location> &locations) override;
     void displayRoutes(const std::vector<RouteData> &routes) override;
     void displayAirQualityHeatmap(const std::vector<AirQualityData> &areaData) override;
-    void displayHistoricalData(const std::vector<AirQualityData> &historicalData) override;
-    void displayWeatherForecast(const WeatherData &weather) override;
     void displayError(const std::string &message) override;
 
 private:

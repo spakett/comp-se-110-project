@@ -16,13 +16,6 @@ struct BoundingBox {
     Coordinates bottomRight;
 };
 
-// Represents a location
-struct Location {
-    std::string displayName;
-    Coordinates coords;
-    BoundingBox boundingBox;
-};
-
 // Travel modes
 enum class TravelMode {
     Auto,
@@ -46,15 +39,6 @@ struct AirQualityData {
     std::map<Irritant, double> readings;
     std::map<Irritant, AirQualityLevel> levels;
     std::vector<Coordinates> points; // Added for heatmap rendering
-};
-
-// Parsed environmental data
-struct WeatherData {
-    std::string timestamp;
-    double temperature;
-    double apparentTemperature;
-    double relativeHumidity;
-    double maxUvIndex;
 };
 
 // Represents a single step in a route
