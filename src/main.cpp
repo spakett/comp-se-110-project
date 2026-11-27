@@ -1,6 +1,7 @@
 #include "QtNetworkClient.h"
 #include "apiHandler.h"
 #include "core.h"
+#include "dataParser.h"
 #include "mainwindow.h"
 #include "sqliteDatabase.h"
 
@@ -12,7 +13,8 @@ int main(int argc, char *argv[]) {
     QtNetworkClient networkClient;
     SqliteDatabase database("air-quality-cache.sqlite");
     database.clearExpiredCache();
-    ApiHandler apiHandler(networkClient, database);
+    DataParser dataParser;
+    ApiHandler apiHandler(networkClient, database, dataParser);
     Core core(w, apiHandler);
     apiHandler.setCallback(core);
     networkClient.setCallback(apiHandler);
