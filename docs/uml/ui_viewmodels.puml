@@ -2,7 +2,7 @@
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
 
-title UI & ViewModels — Class Diagram
+title UI and ViewModels
 
 package "Ports" {
     interface IUiInputPort {
