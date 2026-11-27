@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
     MainWindow w;
     QtNetworkClient networkClient;
     SqliteDatabase database("air-quality-cache.sqlite");
+    database.clearExpiredCache();
     ApiHandler apiHandler(networkClient, database);
     Core core(w, apiHandler);
     apiHandler.setCallback(core);

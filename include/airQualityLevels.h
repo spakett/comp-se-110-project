@@ -19,3 +19,10 @@ const std::array<double, 5>& levelThresholds(Irritant irritant);
 AirQualityLevel levelForReading(Irritant irritant, double value);
 
 std::optional<AirQualityLevel> worstLevel(const AirQualityData& data, const std::vector<Irritant>& selected);
+
+
+std::optional<AirQualityLevel> routeAirQuality(
+    const RouteData& route,
+    const std::vector<AirQualityData>& samples,
+    const std::vector<Irritant>& selected
+);

@@ -20,10 +20,14 @@
 
 namespace {
 
-constexpr char kApiIdentifier[] = "open-meteo-air-quality";
-constexpr char kEndpoint[] = "https://air-quality-api.open-meteo.com/v1/air-quality";
+constexpr char kAirQualityApi[] = "open-meteo-air-quality";
+constexpr char kAirQualityEndpoint[] = "https://air-quality-api.open-meteo.com/v1/air-quality";
 constexpr char kDomain[] = "cams_europe";
 constexpr std::size_t kMaxGridPoints = 100;
+
+constexpr char kRoutingApi[] = "valhalla-route";
+constexpr char kRoutingEndpoint[] = "https://valhalla1.openstreetmap.de/route";
+constexpr int kRouteAlternates = 5;
 
 std::string apiVariable(Irritant irritant) {
     switch (irritant) {
@@ -89,7 +93,7 @@ QUrl makeRequestUrl(const std::vector<Coordinates>& points, const QStringList& v
         longitudes.append(QString::number(point.longitude, 'f', 7));
     }
 
-    QUrl url(QString::fromLatin1(kEndpoint));
+    QUrl url(QString::fromLatin1(kAirQualityEndpoint));
     QUrlQuery query;
     query.addQueryItem("latitude", latitudes.join(','));
     query.addQueryItem("longitude", longitudes.join(','));
@@ -158,6 +162,127 @@ bool parseSamples(
     return true;
 }
 
+const char* costingFor(TravelMode mode) {
+    switch(mode) {
+        case TravelMode::Auto: return "auto";
+        case TravelMode::Bicycle: return "bicycle";
+        case TravelMode::Pedestrian: return "pedestrian";
+    }
+    return "pedestrian";
+}
+
+std::string makeRouteBody(const Coordinates& origin, const Coordinates& destination, TravelMode mode) {
+    const auto location = [](const Coordinates& c) {
+        return QJsonObject{{"lat", c.latitude}, {"lon", c.longitude}};
+    };
+    const QJsonObject body {
+        {"locations", QJsonArray{location(origin), location(destination)}},
+        {"costing", QString::fromLatin1(costingFor(mode))},
+        {"alternates", kRouteAlternates},
+        {"units", "kilometers"},
+        {"language", "en-US"},
+    };
+    return QJsonDocument(body).toJson(QJsonDocument::Compact).toStdString();
+}
+
+// Valhalla encodes shapes as polyline6 (precision 1e6)
+std::vector<Coordinates> decodePolyline(const std::string& encoded, double precision = 1e6) {
+    std::vector<Coordinates> points;
+    std::size_t index = 0;
+    long long latitude = 0;
+    long long longitude = 0;
+    const auto next = [&](long long& out) {
+        long long result = 0;
+        int shift = 0;
+        int byte = 0;
+        do {
+            if(index >= encoded.size())
+                return false;
+            byte = static_cast<unsigned char>(encoded[index++]) - 63;
+            result |= static_cast<long long>(byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+        out = (result & 1) ? ~(result >> 1) : (result >> 1);
+        return true;
+    };
+    while (index < encoded.size()) {
+        long long dLat = 0;
+        long long dLon = 0;
+        if (!next(dLat) || !next(dLon))
+            break;
+        latitude += dLat;
+        longitude += dLon;
+        points.push_back({latitude/precision, longitude/precision});
+    }
+    return points;
+}
+
+bool parseTrip(const QJsonObject& trip, RouteData& route, std::string& error) {
+    const QJsonObject summary = trip.value("summary").toObject();
+    const QJsonArray legs = trip.value("legs").toArray();
+    if (summary.isEmpty() || legs.isEmpty()) {
+        error = "Route response is empty";
+        return false;
+    }
+    route.totalLengthKm = summary.value("length").toDouble();
+    route.totalTimeSeconds = summary.value("time").toDouble();
+    route.totalCost = summary.value("cost").toDouble(route.totalTimeSeconds);
+
+    for(const QJsonValue& legValue : legs) {
+        const QJsonObject leg = legValue.toObject();
+        for(const QJsonValue& maneuverValue : leg.value("maneuvers").toArray()) {
+            const QJsonObject maneuver = maneuverValue.toObject();
+            route.maneuvers.push_back({
+                maneuver.value("instruction").toString().toStdString(),
+                maneuver.value("length").toDouble(),
+                maneuver.value("time").toDouble(),
+            });
+        }
+        std::vector<Coordinates> shape = decodePolyline(leg.value("shape").toString().toStdString());
+        if(!route.polyline.empty() && !shape.empty()){
+            shape.erase(shape.begin());
+        }
+        route.polyline.insert(route.polyline.end(), shape.begin(), shape.end());
+    }
+
+    return true;
+}
+
+bool parseRoutes(const std::string& payload, std::vector<RouteData>& routes, std::string& error) {
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromStdString(payload), &parseError);
+    if(parseError.error != QJsonParseError::NoError) {
+        error = parseError.errorString().toStdString();
+        return false;
+    }
+    if(!document.isObject()) {
+        error = "Route response had an unexpected shape";
+        return false;
+    }
+
+    const QJsonObject root = document.object();
+    if(root.contains("error")) {
+        error = root.value("error").toString().toStdString();
+        return false;
+    }
+
+    RouteData primary{};
+    if(!parseTrip(root.value("trip").toObject(), primary, error)) {
+        return false;
+    }
+    routes.push_back(std::move(primary));
+
+    // Skip any alternates that are failed to parse and keep the primary
+    for(const QJsonValue& alternate : root.value("alternates").toArray()) {
+        RouteData route{};
+        std::string ignored;
+        if(parseTrip(alternate.toObject().value("trip").toObject(), route, ignored)) {
+            routes.push_back(std::move(route));
+        }
+    }
+    return true;
+}
+
 }
 
 ApiHandler::ApiHandler(INetworkRequestPort& networkRequest, IDatabasePort& database)
@@ -167,6 +292,14 @@ ApiHandler::ApiHandler(INetworkRequestPort& networkRequest, IDatabasePort& datab
 
 void ApiHandler::setCallback(IApiHandlerCallbackPort& callback) {
     m_callback = &callback;
+}
+
+const char* ApiHandler::label(RequestKind kind) {
+    switch(kind) {
+        case RequestKind::AreaAirQuality: return "air-quality";
+        case RequestKind::Routes: return "route";
+    }
+    return "API";
 }
 
 void ApiHandler::requestAreaAirQuality(
@@ -196,13 +329,30 @@ void ApiHandler::requestAreaAirQuality(
         return;
     }
 
-    const QUrl url = makeRequestUrl(points, variables);
+    const std::string url = makeRequestUrl(points, variables).toString(QUrl::FullyEncoded).toStdString();
     dispatchRequest(
         requestId,
-        url.toString(QUrl::FullyEncoded).toStdString(),
-        {{"Accept", "application/json"}},
-        points,
-        irritants
+        RequestContext{RequestKind::AreaAirQuality, kAirQualityApi, url, points, irritants},
+        "GET", url, {{"Accept", "application/json"}}
+    );
+}
+
+void ApiHandler::requestRoutes(
+    const std::string& requestId,
+    const Coordinates& origin,
+    const Coordinates& destination,
+    TravelMode mode
+) {
+    if(!m_callback) 
+        return;
+    const std::string url = kRoutingEndpoint;
+    const std::string body = makeRouteBody(origin, destination, mode);
+    dispatchRequest(
+        requestId, 
+        RequestContext{RequestKind::Routes, kRoutingApi, "POST " + url + "\n" + body, {}, {}},
+        "POST", url,
+        {{"Accept", "application/json"}, {"Content-Type", "application/json"}},
+        body
     );
 }
 
@@ -218,7 +368,7 @@ void ApiHandler::onNetworkResponse(
         return;
     const RequestContext context = request->second;
     m_pendingRequests.erase(request);
-    if (apiIdentifier != kApiIdentifier) {
+    if (apiIdentifier != context.apiIdentifier) {
         m_callback->onApiError(requestId, "Network response did not match its request");
         return;
     }
@@ -233,27 +383,29 @@ void ApiHandler::onNetworkResponse(
 
 void ApiHandler::onNetworkError(
     const std::string& requestId,
-    const std::string& apiIdentifier,
+    const std::string&,
     const std::string& errorMessage
 ) {
     if (!m_callback)
         return;
-    if (m_pendingRequests.erase(requestId) == 0)
+    const auto request = m_pendingRequests.find(requestId);
+    if(request == m_pendingRequests.end())
         return;
-    const std::string prefix = apiIdentifier == kApiIdentifier ? "Air quality" : "Network";
-    m_callback->onApiError(requestId, prefix + ": " + errorMessage);
+    const RequestKind kind = request->second.kind;
+    m_pendingRequests.erase(request);
+    m_callback->onApiError(requestId, std::string(label(kind)) + " request failed: " + errorMessage);
 }
 
 void ApiHandler::dispatchRequest(
     const std::string& requestId,
+    const RequestContext& context,
+    const std::string& method,
     const std::string& url,
     const std::map<std::string, std::string>& headers,
-    const std::vector<Coordinates>& points,
-    const std::vector<Irritant>& irritants
+    const std::string& body
 ) {
     if (!m_callback)
         return;
-    const RequestContext context{url, points, irritants};
     try {
         const std::string cachedPayload = m_database.loadCache(context.cacheKey);
         if (!cachedPayload.empty() && deliverResponse(requestId, context, cachedPayload, false))
@@ -263,13 +415,13 @@ void ApiHandler::dispatchRequest(
 
     m_pendingRequests[requestId] = context;
     try {
-        m_networkRequest.request(requestId, "GET", kApiIdentifier, url, headers);
+        m_networkRequest.request(requestId, method, context.apiIdentifier, url, headers, body);
     } catch (const std::exception& exception) {
         m_pendingRequests.erase(requestId);
-        m_callback->onApiError(requestId, std::string("Could not start air-quality request: ") + exception.what());
+        m_callback->onApiError(requestId, std::string("Could not start ") + label(context.kind) + " request: " + exception.what());
     } catch (...) {
         m_pendingRequests.erase(requestId);
-        m_callback->onApiError(requestId, "Could not start air-quality request");
+        m_callback->onApiError(requestId, std::string("Could not start ") + label(context.kind) + " request");
     }
 }
 
@@ -281,13 +433,26 @@ bool ApiHandler::deliverResponse(
 ) {
     if (!m_callback)
         return false;
-    std::vector<AirQualityData> samples;
     std::string error;
-    if (!parseSamples(payload, context.irritants, context.points, samples, error)) {
-        if (reportError)
-            m_callback->onApiError(requestId, "Could not parse air-quality response: " + error);
-        return false;
+    switch(context.kind) {
+        case RequestKind::AreaAirQuality: {
+            std::vector<AirQualityData> samples;
+            if(parseSamples(payload, context.irritants, context.points, samples, error)) {
+                m_callback->onAreaAirQualityFound(requestId, samples);
+                return true;
+            }
+            break;
+        }
+        case RequestKind::Routes: {
+            std::vector<RouteData> routes;
+            if(parseRoutes(payload, routes, error)) {
+                m_callback->onRoutesFound(requestId, routes);
+                return true;
+            }
+            break;
+        }
     }
-    m_callback->onAreaAirQualityFound(requestId, samples);
-    return true;
+    if(reportError)
+        m_callback->onApiError(requestId, std::string("Could not parse ") + label(context.kind) + " reponse: " + error);
+    return false;
 }

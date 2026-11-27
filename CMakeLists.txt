@@ -84,13 +84,13 @@ target_link_libraries(CommutePlanner
 )
 
 if(BUILD_TESTING)
-    add_executable(apiHandlerTests
-        tests/apiHandlerTest.cpp
-        src/apiHandler.cpp
+    add_executable(sqliteDatabaseTests
+        tests/sqliteDatabaseTest.cpp
+        src/sqliteDatabase.cpp
     )
-    target_include_directories(apiHandlerTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    target_link_libraries(apiHandlerTests PRIVATE Qt::Core)
-    add_test(NAME apiHandlerTests COMMAND apiHandlerTests)
+    target_include_directories(sqliteDatabaseTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(sqliteDatabaseTests PRIVATE SQLite::SQLite3)
+    add_test(NAME sqliteDatabaseTests COMMAND sqliteDatabaseTests)
 endif()
 
 set_target_properties(CommutePlanner PROPERTIES

@@ -10,6 +10,7 @@ public:
     virtual ~IApiHandlerCallbackPort() = default;
 
     virtual void onAreaAirQualityFound(const std::string& requestId, const std::vector<AirQualityData>& data) = 0;
+    virtual void onRoutesFound(const std::string& requestId, const std::vector<RouteData>& routes) = 0;
     virtual void onApiError(const std::string& requestId, const std::string& message) = 0;
 };
 
@@ -21,5 +22,12 @@ public:
         const std::string& requestId,
         const BoundingBox& area,
         const std::vector<Irritant>& irritants
+    ) = 0;
+
+    virtual void requestRoutes(
+        const std::string& requestId,
+        const Coordinates& origin,
+        const Coordinates& destination,
+        TravelMode mode
     ) = 0;
 };
