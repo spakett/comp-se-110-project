@@ -3,10 +3,8 @@
 #include "airQualityLevels.h"
 
 #include <QJsonArray>
-#include <QByteArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonParseError>
 #include <QUrl>
 #include <QUrlQuery>
 #include <QStringList>
@@ -104,64 +102,6 @@ QUrl makeRequestUrl(const std::vector<Coordinates>& points, const QStringList& v
     return url;
 }
 
-bool parseSamples(
-    const std::string& payload,
-    const std::vector<Irritant>& irritants,
-    const std::vector<Coordinates>& requestedPoints,
-    std::vector<AirQualityData>& samples,
-    std::string& error
-) {
-    QJsonParseError parseError;
-    const QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromStdString(payload), &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
-        error = parseError.errorString().toStdString();
-        return false;
-    }
-
-    QJsonArray locations;
-    if (document.isArray()) {
-        locations = document.array();
-    } else if (document.isObject() && requestedPoints.size() == 1) {
-        locations.append(document.object());
-    } else {
-        error = "Air-quality response had an unexpected shape";
-        return false;
-    }
-    if (locations.size() != static_cast<int>(requestedPoints.size())) {
-        error = "Air-quality response did not contain every requested grid point";
-        return false;
-    }
-
-    for (qsizetype index = 0; index < locations.size(); ++index) {
-        if (!locations[index].isObject()) {
-            error = "Air-quality response contained an invalid location";
-            return false;
-        }
-        const QJsonObject location = locations[index].toObject();
-        const QJsonObject current = location.value("current").toObject();
-        if (current.isEmpty() || !current.value("time").isString()) {
-            error = "Air-quality response did not contain current readings";
-            return false;
-        }
-
-        const Coordinates fallback = requestedPoints[static_cast<std::size_t>(index)];
-        const double latitude = location.value("latitude").toDouble(fallback.latitude);
-        const double longitude = location.value("longitude").toDouble(fallback.longitude);
-        AirQualityData sample{current.value("time").toString().toStdString(), {}, {}, {{latitude, longitude}}};
-        for (Irritant irritant : irritants) {
-            const std::string name = apiVariable(irritant);
-            const QJsonValue reading = current.value(QString::fromStdString(name));
-            if (!name.empty() && reading.isDouble()) {
-                const double value = reading.toDouble();
-                sample.readings.emplace(irritant, value);
-                sample.levels.emplace(irritant, levelForReading(irritant, value));
-            }
-        }
-        samples.push_back(std::move(sample));
-    }
-    return true;
-}
-
 const char* costingFor(TravelMode mode) {
     switch(mode) {
         case TravelMode::Auto: return "auto";
@@ -185,109 +125,12 @@ std::string makeRouteBody(const Coordinates& origin, const Coordinates& destinat
     return QJsonDocument(body).toJson(QJsonDocument::Compact).toStdString();
 }
 
-// Valhalla encodes shapes as polyline6 (precision 1e6)
-std::vector<Coordinates> decodePolyline(const std::string& encoded, double precision = 1e6) {
-    std::vector<Coordinates> points;
-    std::size_t index = 0;
-    long long latitude = 0;
-    long long longitude = 0;
-    const auto next = [&](long long& out) {
-        long long result = 0;
-        int shift = 0;
-        int byte = 0;
-        do {
-            if(index >= encoded.size())
-                return false;
-            byte = static_cast<unsigned char>(encoded[index++]) - 63;
-            result |= static_cast<long long>(byte & 0x1f) << shift;
-            shift += 5;
-        } while (byte >= 0x20);
-        out = (result & 1) ? ~(result >> 1) : (result >> 1);
-        return true;
-    };
-    while (index < encoded.size()) {
-        long long dLat = 0;
-        long long dLon = 0;
-        if (!next(dLat) || !next(dLon))
-            break;
-        latitude += dLat;
-        longitude += dLon;
-        points.push_back({latitude/precision, longitude/precision});
-    }
-    return points;
 }
 
-bool parseTrip(const QJsonObject& trip, RouteData& route, std::string& error) {
-    const QJsonObject summary = trip.value("summary").toObject();
-    const QJsonArray legs = trip.value("legs").toArray();
-    if (summary.isEmpty() || legs.isEmpty()) {
-        error = "Route response is empty";
-        return false;
-    }
-    route.totalLengthKm = summary.value("length").toDouble();
-    route.totalTimeSeconds = summary.value("time").toDouble();
-    route.totalCost = summary.value("cost").toDouble(route.totalTimeSeconds);
-
-    for(const QJsonValue& legValue : legs) {
-        const QJsonObject leg = legValue.toObject();
-        for(const QJsonValue& maneuverValue : leg.value("maneuvers").toArray()) {
-            const QJsonObject maneuver = maneuverValue.toObject();
-            route.maneuvers.push_back({
-                maneuver.value("instruction").toString().toStdString(),
-                maneuver.value("length").toDouble(),
-                maneuver.value("time").toDouble(),
-            });
-        }
-        std::vector<Coordinates> shape = decodePolyline(leg.value("shape").toString().toStdString());
-        if(!route.polyline.empty() && !shape.empty()){
-            shape.erase(shape.begin());
-        }
-        route.polyline.insert(route.polyline.end(), shape.begin(), shape.end());
-    }
-
-    return true;
-}
-
-bool parseRoutes(const std::string& payload, std::vector<RouteData>& routes, std::string& error) {
-    QJsonParseError parseError;
-    const QJsonDocument document = QJsonDocument::fromJson(QByteArray::fromStdString(payload), &parseError);
-    if(parseError.error != QJsonParseError::NoError) {
-        error = parseError.errorString().toStdString();
-        return false;
-    }
-    if(!document.isObject()) {
-        error = "Route response had an unexpected shape";
-        return false;
-    }
-
-    const QJsonObject root = document.object();
-    if(root.contains("error")) {
-        error = root.value("error").toString().toStdString();
-        return false;
-    }
-
-    RouteData primary{};
-    if(!parseTrip(root.value("trip").toObject(), primary, error)) {
-        return false;
-    }
-    routes.push_back(std::move(primary));
-
-    // Skip any alternates that are failed to parse and keep the primary
-    for(const QJsonValue& alternate : root.value("alternates").toArray()) {
-        RouteData route{};
-        std::string ignored;
-        if(parseTrip(alternate.toObject().value("trip").toObject(), route, ignored)) {
-            routes.push_back(std::move(route));
-        }
-    }
-    return true;
-}
-
-}
-
-ApiHandler::ApiHandler(INetworkRequestPort& networkRequest, IDatabasePort& database)
+ApiHandler::ApiHandler(INetworkRequestPort& networkRequest, IDatabasePort& database, IDataParserPort& dataParser)
     : m_networkRequest(networkRequest)
-    , m_database(database) {
+    , m_database(database)
+    , m_dataParser(dataParser) {
 }
 
 void ApiHandler::setCallback(IApiHandlerCallbackPort& callback) {
@@ -436,16 +279,17 @@ bool ApiHandler::deliverResponse(
     std::string error;
     switch(context.kind) {
         case RequestKind::AreaAirQuality: {
-            std::vector<AirQualityData> samples;
-            if(parseSamples(payload, context.irritants, context.points, samples, error)) {
+            const std::vector<AirQualityData> samples =
+                m_dataParser.parseAirQuality(payload, context.irritants, context.points, &error);
+            if(error.empty()) {
                 m_callback->onAreaAirQualityFound(requestId, samples);
                 return true;
             }
             break;
         }
         case RequestKind::Routes: {
-            std::vector<RouteData> routes;
-            if(parseRoutes(payload, routes, error)) {
+            const std::vector<RouteData> routes = m_dataParser.parseRoute(payload, &error);
+            if(error.empty()) {
                 m_callback->onRoutesFound(requestId, routes);
                 return true;
             }
@@ -453,6 +297,6 @@ bool ApiHandler::deliverResponse(
         }
     }
     if(reportError)
-        m_callback->onApiError(requestId, std::string("Could not parse ") + label(context.kind) + " reponse: " + error);
+        m_callback->onApiError(requestId, std::string("Could not parse ") + label(context.kind) + " response: " + error);
     return false;
 }

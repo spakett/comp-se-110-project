@@ -295,7 +295,3 @@ void MainWindow::displayRoutes(const std::vector<RouteData> &routes)
                                    .arg(air));
     }
 }
-
-void MainWindow::displayLocations(const std::vector<Location> &) {}
-void MainWindow::displayHistoricalData(const std::vector<AirQualityData> &) {}
-void MainWindow::displayWeatherForecast(const WeatherData &) {}
