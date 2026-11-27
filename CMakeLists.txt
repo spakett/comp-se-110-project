@@ -82,7 +82,7 @@ target_link_libraries(CommutePlanner
         Qt::Location
         Qt::Positioning
         Qt::Network
-        SQLite::SQLite3
+        SQLite3::SQLite3
 )
 
 if(BUILD_TESTING)
@@ -91,7 +91,7 @@ if(BUILD_TESTING)
         src/sqliteDatabase.cpp
     )
     target_include_directories(sqliteDatabaseTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    target_link_libraries(sqliteDatabaseTests PRIVATE SQLite::SQLite3)
+    target_link_libraries(sqliteDatabaseTests PRIVATE SQLite3::SQLite3)
     add_test(NAME sqliteDatabaseTests COMMAND sqliteDatabaseTests)
 endif()
 
