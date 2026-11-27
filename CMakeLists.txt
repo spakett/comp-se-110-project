@@ -41,6 +41,8 @@ qt_add_executable(CommutePlanner
     src/QtNetworkClient.cpp
     include/apiHandler.h
     src/apiHandler.cpp
+    include/dataParser.h
+    src/dataParser.cpp
     include/core.h
     src/core.cpp
 )
